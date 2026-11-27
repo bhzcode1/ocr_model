@@ -116,6 +116,7 @@ flowchart LR
 6. **Aiming hints** come from simple checks: frame brightness (too dark), blur (Laplacian variance), boxes touching the frame border (cut off), small or low-confidence text (move closer).
 7. **Auto mode** remembers what it said. The same sign (fuzzy match, since OCR output jitters between frames) isn't repeated for 30 s, or 10 s for hazards.
 8. **Voice:** the sentence is split into Hindi and English runs, each synthesized with its own Piper voice, and the runs are joined into one clip. If a Piper voice is missing it falls back to `espeak-ng`; if that's missing too, the text is only printed.
+   With `clone = "voice_ocr.mp3"` under `[speaker]`, both languages are spoken in the voice from that recording instead (XTTS-v2 voice cloning). Install it with `pip install coqui-tts torchcodec` (plus `torchaudio`). On the first run it downloads the model (~2 GB) and asks you to accept the [Coqui Public Model License](https://coqui.ai/cpml), which allows non-commercial use only. It takes a few seconds per sentence on a PC CPU and is too slow for the Pi. If it can't load, the Piper voices are used.
 
 ## Settings
 

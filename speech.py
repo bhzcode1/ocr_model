@@ -93,11 +93,33 @@ def espeak_voice(lang):
                                                 capture_output=True, check=True).stdout)
 
 
+def cloned_voices(sample):
+    """sample = a few seconds of someone's speech -> {"en": fn, "hi": fn} speaking in that voice (XTTS-v2).
+    {} if coqui-tts is missing or the model can't load; the caller falls back to Piper."""
+    try:
+        from TTS.api import TTS
+        model = TTS("tts_models/multilingual/multi-dataset/xtts_v2").synthesizer.tts_model
+        gpt, spk = model.get_conditioning_latents(audio_path=[str(sample)])  # once: listening to the sample is slow
+    except Exception as e:  # not installed, license not accepted, no sample file...
+        log.warning("voice clone from %s unavailable (%s): using Piper", sample, e)
+        return {}
+
+    def voice(lang):
+        def synth(text):
+            wav = np.asarray(model.inference(text, lang, gpt, spk)["wav"])
+            return (np.clip(wav, -1, 1) * 32767).astype(np.int16), 24000  # XTTS outputs 24 kHz floats
+        return synth
+    return {lang: voice(lang) for lang in ("en", "hi")}
+
+
 class Speaker:
-    def __init__(self, en="en_US-lessac-medium", hi="hi_IN-priyamvada-medium", voices=None, play=None):
-        """voices = {"en": fn, "hi": fn}, fn(text) -> (int16 samples, rate); play(wav_bytes, wait). Both for tests."""
+    def __init__(self, en="en_US-lessac-medium", hi="hi_IN-priyamvada-medium", clone=None, voices=None, play=None):
+        """clone = speech sample (path, relative to this folder) to speak in that voice instead of Piper's.
+        voices = {"en": fn, "hi": fn}, fn(text) -> (int16 samples, rate); play(wav_bytes, wait). Both for tests."""
         if voices is None:
-            voices = {lang: piper_voice(name) or espeak_voice(lang) for lang, name in (("en", en), ("hi", hi))}
+            cloned = cloned_voices(Path(__file__).parent / clone) if clone else {}
+            voices = {lang: cloned.get(lang) or piper_voice(name) or espeak_voice(lang)
+                      for lang, name in (("en", en), ("hi", hi))}
             for lang, fn in voices.items():
                 if fn is None:
                     log.warning("no %s voice (Piper model in %s or espeak-ng): it won't be spoken", lang, VOICES)

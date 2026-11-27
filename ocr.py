@@ -63,7 +63,7 @@ class Result:
 
 class OCR:
     def __init__(self, min_score=0.6, max_side=960, hindi=True, retry_below=0.85, locations=True, guide=None,
-                 short_score=0.95):
+                 short_score=0.95, params=None, hindi_params=None):
         # Tuning knobs: raise min_score if it reads noise, lower it for blurry/far signs.
         # max_side caps the detector input; bigger = small/far text found, but slower on the Pi.
         # (RapidOCR's default upscales the *short* side to 736 -> 5-9 s on wide frames.)
@@ -73,12 +73,13 @@ class OCR:
         self.min_score, self.retry_below, self.locations, self.guide = min_score, retry_below, locations, guide or {}
         self.short_score = short_score
         self.unclear = 0  # boxes the detector found but couldn't read confidently (first pass of last read)
-        p = {"Det.limit_type": "max", "Det.limit_side_len": max_side, "Global.log_level": "error"}
+        p = {"Det.limit_type": "max", "Det.limit_side_len": max_side, "Global.log_level": "error",
+             **enums(params or {})}  # params: extra RapidOCR settings, e.g. {"Det.model_type": "medium"}
         self.engine = RapidOCR(params=p)
         # Default PP-OCRv6 has no Devanagari. This 8 MB PP-OCRv5 model reads Hindi and English;
         # only its recognizer is used (detection is shared with self.engine).
         self.hindi = RapidOCR(params={**p, "Rec.lang_type": LangRec.DEVANAGARI, "Rec.model_type": ModelType.MOBILE,
-                                      "Rec.ocr_version": OCRVersion.PPOCRV5}) if hindi else None
+                                      "Rec.ocr_version": OCRVersion.PPOCRV5, **enums(hindi_params or {})}) if hindi else None
 
     def read(self, frame, retry_below=None):
         """BGR frame -> Lines in reading order (top-to-bottom, left-to-right).
@@ -155,6 +156,13 @@ class OCR:
     def speak(self, frame):
         """Plain sentence, no locations or hints (use describe() in the app)."""
         return to_speech(self.read(frame))
+
+
+def enums(params):
+    """Config strings -> the Enum values RapidOCR insists on: {"Det.model_type": "medium"} -> ModelType.MEDIUM."""
+    kinds = {"model_type": ModelType, "ocr_version": OCRVersion, "lang_type": LangRec}
+    return {k: kinds[k.split(".")[-1]](v) if k.split(".")[-1] in kinds and isinstance(v, str) else v
+            for k, v in params.items()}
 
 
 def crop_box(img, box):

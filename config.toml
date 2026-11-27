@@ -19,6 +19,7 @@ unsure = 0.85      # mean confidence below this asks to move closer / hold still
 [speaker]          # Speaker(...): Piper voice names in ./voices
 en = "en_US-lessac-medium"
 hi = "hi_IN-priyamvada-medium"
+clone = "voice_ocr.mp3"  # speak in this recorded voice (XTTS-v2, needs coqui-tts); remove the line for Piper
 
 [announcer]        # Announcer(...): auto mode
 repeat_after = 30  # seconds before the same sign is said again

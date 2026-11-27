@@ -3,3 +3,4 @@ __pycache__/
 bench_signs/*.html
 bench_signs/_demo.png
 voices/
+data/
