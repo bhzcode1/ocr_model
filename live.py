@@ -191,7 +191,7 @@ async function tick() {
       return li;
     }));
     $("empty").hidden = s.lines.length > 0;
-    $("mute").textContent = s.muted ? "Unmute" : "Mute";
+    $("mute").textContent = !s.can_speak ? "Voice off" : s.muted ? "Unmute" : "Mute";
     $("mute").disabled = !s.can_speak;
     $("status").textContent = s.camera ? `${s.ms} ms per read` : "Camera not working";
     $("status").className = s.camera ? "" : "bad";

@@ -7,6 +7,19 @@ Runs fully on-device on a Raspberry Pi 5: [RapidOCR](https://github.com/RapidAI/
 
 Reads **English**, **Hindi (Devanagari)** and **bilingual** signs (e.g. `निकास EXIT`).
 
+![Live view: the camera frame with numbered boxes around each sign, and the spoken sentence, aiming hints and text list beside it](docs/images/live_view.jpg)
+
+## Examples
+
+These are real outputs of the model. The scenes are synthetic, and the boxes and numbers are what it detected. **Amber** = hazard, **green** = other text.
+
+| Camera frame | What the user hears |
+|---|---|
+| ![Station wall with three signs](docs/images/1_station.jpg) | *"Warning: CAUTION Wet Floor, on your left. निकास EXIT, on your right. Platform 3, ahead."*<br><br>The hazard is said first, each sign gets its location, and the bilingual sign gets the Hindi voice for `निकास` and the English voice for `EXIT`. |
+| ![Same wall with the CAUTION sign cut off at the left edge](docs/images/2_cut_off.jpg) | *"TION Wet Floor, on your left. निकास EXIT, on your right. Platform 3, ahead. **Text cut off on the left, turn left.**"*<br><br>With half the word missing it can't tell this is a hazard, which is why the aiming hint matters. |
+| ![Very dark frame next to its brightened version](docs/images/3_night.jpg) | *"Warning: CAUTION Wet Floor, on your left. निकास EXIT, on your right. Platform 3, ahead."*<br><br>At night the first pass is unsure, so it retries on an auto-brightened copy (right half) and reads everything. |
+| ![Sign with text running vertically](docs/images/4_sideways.jpg) | *"Ticket Counter, on your right."*<br><br>Sideways text is read by the rotated retry pass. The box is mapped back so the location is still correct. |
+
 ## What the user hears
 
 | Situation | Spoken |
@@ -45,6 +58,8 @@ python live.py --no-speak       # silent, view only
 python live.py --host 0.0.0.0   # on the Pi: watch the glasses' camera from a phone on the same Wi-Fi
 ```
 
+This is the page in the screenshot at the top.
+
 - **Left:** live webcam video with a numbered box around each piece of text. **Amber** = hazard (CAUTION, खतरा…), **green** = other text.
 - **Right:** the last spoken sentence, aiming hints, and the list of text in view with location (left / ahead / right) and confidence.
 - **Voice:** each new sign is spoken once, the same as hands-free mode. **Read now** (or **Space**) speaks everything in view plus the hints, like the glasses' button. **Mute** silences it.
@@ -80,6 +95,18 @@ if text:
 - `sharpest(cap, burst=8)` grabs a burst from a `cv2.VideoCapture` and returns the sharpest frame, which handles head shake.
 
 ## How it works
+
+```mermaid
+flowchart LR
+    A[Camera burst<br/>keep sharpest frame] --> B[Detect text boxes]
+    B --> C[Read each box with<br/>English + Hindi models]
+    C --> D{Confident?}
+    D -- no --> E[Retry: brighten, sharpen,<br/>rotate ±90°] --> F
+    D -- yes --> F[Reading order<br/>+ location left/ahead/right]
+    F --> G[Hazards first<br/>+ aiming hints]
+    G --> H[Piper voice<br/>Hindi / English]
+    H --> I((Earphones))
+```
 
 1. **Detect** text boxes once. The detector input is capped at `max_side=960` px so wide camera frames stay fast on the Pi.
 2. **Recognize** every box with both the English and the Devanagari model (batched). If the Hindi read contains Devanagari it wins, otherwise the English read is used. Picking by score fails: on `निकास EXIT` the English model confidently reads just `EXIT`.
