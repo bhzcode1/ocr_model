@@ -29,11 +29,29 @@ python -m piper.download_voices --data-dir voices en_US-lessac-medium hi_IN-priy
 python ocr.py sign.jpg --speak     # read an image file aloud
 python ocr.py --camera 0 --speak   # ENTER = read, q = quit
 python ocr.py --auto 0 --speak     # hands-free: each new sign is announced once
+python live.py                     # live webcam view in the browser: boxes, text, hints, voice
 python test_ocr.py                 # self-check
 python bench.py                    # hard-case accuracy/latency benchmark
 ```
 
 The OCR models download on first run, then everything works offline. Leave out `--speak` to only print.
+
+## Live view (for testing and demos)
+
+```bash
+python live.py                  # opens http://localhost:8000 in the browser
+python live.py --camera 1       # another webcam
+python live.py --no-speak       # silent, view only
+python live.py --host 0.0.0.0   # on the Pi: watch the glasses' camera from a phone on the same Wi-Fi
+```
+
+- **Left:** live webcam video with a numbered box around each piece of text. **Amber** = hazard (CAUTION, खतरा…), **green** = other text.
+- **Right:** the last spoken sentence, aiming hints, and the list of text in view with location (left / ahead / right) and confidence.
+- **Voice:** each new sign is spoken once, the same as hands-free mode. **Read now** (or **Space**) speaks everything in view plus the hints, like the glasses' button. **Mute** silences it.
+- OCR runs in a background thread on the sharpest of the last 5 frames, so the video stays smooth.
+- Stop it with **Ctrl+C** in the terminal; that also releases the webcam.
+
+The page is for developers and sighted helpers; the blind user only hears the voice. It uses only the Python standard library (no web framework). `--host 0.0.0.0` shows the camera to everyone on that network, so use it only on a trusted one.
 
 ## Integrating it (for the app / trigger team)
 
@@ -111,6 +129,7 @@ Edit `User` and the paths in [auranav-ocr.service](auranav-ocr.service) if the r
 | File | Purpose |
 |---|---|
 | `ocr.py` | OCR, location, aiming hints, auto-mode `Announcer`, CLI |
+| `live.py` | Live webcam viewer in the browser (http://localhost:8000): numbered boxes (amber = hazard), text, location, hints, spoken output; Space = read now |
 | `speech.py` | `Speaker`: Piper TTS, Hindi/English routing, beeps, interruptible playback |
 | `config.toml` | All settings |
 | `test_ocr.py` | Assert-based self-check (reading order, hazards, location, hints, no-repeat, voice routing, Hindi) |
