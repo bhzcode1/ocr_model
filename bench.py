@@ -1,7 +1,9 @@
 """Hard-case OCR benchmark: synthetic signs in camera-like frames. Run: python bench.py"""
-import difflib, glob, random, time, unicodedata
+import difflib, glob, random, time
 import cv2, numpy as np
 from PIL import Image, ImageDraw, ImageFont
+
+from ocr import OCR, norm
 
 # Windows fonts, else whatever TTFs the Pi has (sudo apt install fonts-dejavu fonts-liberation)
 FONTS = [f for n in ("arial", "arialbd", "verdana", "times", "impact", "calibri")
@@ -100,12 +102,6 @@ def dataset(texts=TEXTS, n=6, seed=0):
     return [(c, t, fn(t, rng, pr.choice(FONTS))) for c, fn in CASES.items() for t in pr.sample(texts, n)]
 
 
-def norm(s):
-    s = s.lower().replace("warning:", "")
-    # drop spaces/punctuation only; isalnum() would also drop Devanagari vowel signs (matras)
-    return "".join(ch for ch in s if not (ch.isspace() or unicodedata.category(ch)[0] in "PS"))
-
-
 def score(read_fn, data):
     by, ms = {}, []
     for c, truth, img in data:
@@ -121,7 +117,6 @@ def report(name, res):
 
 
 if __name__ == "__main__":
-    from ocr import OCR
     for hindi in (False, True):
         ocr = OCR(hindi=hindi)
         for name, texts in (("english", TEXTS), ("hindi", HINDI), ("bilingual", BILINGUAL)):

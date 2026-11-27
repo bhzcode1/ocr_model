@@ -1,0 +1,17 @@
+# Hands-free sign reader. Install:
+#   sudo cp auranav-ocr.service /etc/systemd/system/ && sudo systemctl enable --now auranav-ocr
+#   journalctl -u auranav-ocr -f      # logs
+# Edit User / paths if the repo isn't at /home/pi/ocr_model.
+[Unit]
+Description=AuraNav OCR (hands-free sign reader)
+After=sound.target
+
+[Service]
+User=pi
+WorkingDirectory=/home/pi/ocr_model
+ExecStart=/home/pi/ocr_model/.venv/bin/python ocr.py --auto 0 --speak
+Restart=always
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target

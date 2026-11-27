@@ -2,3 +2,4 @@ rapidocr>=3.10
 onnxruntime
 opencv-python
 numpy
+piper-tts

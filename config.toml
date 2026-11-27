@@ -1,0 +1,29 @@
+# AuraNav OCR settings. Each section maps 1:1 to keyword arguments in ocr.py / speech.py.
+
+[ocr]              # OCR(...)
+min_score = 0.6    # raise if it reads noise, lower for blurry / far signs
+short_score = 0.95 # 1-character reads need this much confidence (stray clutter)
+max_side = 960     # detector input cap: bigger finds smaller text, slower on the Pi
+hindi = true       # false = English only, faster
+retry_below = 0.85 # mean confidence below this triggers the enhance/sharpen/rotate retries
+locations = true   # say "on your left" / "ahead" / "on your right"
+
+[guidance]         # guidance(...) aiming-hint thresholds: tune on real glasses footage
+dark = 40          # mean brightness (0-255) below which "Too dark"
+blur = 60          # Laplacian variance below which "Image blurry" (depends on resolution)
+flat = 12          # brightness std below which the frame is a blank wall, not blur
+edge = 0.01        # text within this fraction of the border counts as cut off
+small = 0.03       # text shorter than this fraction of the frame height -> "Move closer"
+unsure = 0.85      # mean confidence below this asks to move closer / hold still
+
+[speaker]          # Speaker(...): Piper voice names in ./voices
+en = "en_US-lessac-medium"
+hi = "hi_IN-priyamvada-medium"
+
+[announcer]        # Announcer(...): auto mode
+repeat_after = 30  # seconds before the same sign is said again
+hazard_repeat = 10 # seconds before the same hazard is said again
+similar = 0.8      # fuzzy match: OCR output jitters between frames
+
+[camera]
+burst = 8          # frames grabbed per read, sharpest one is used

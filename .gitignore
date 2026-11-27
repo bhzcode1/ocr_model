@@ -2,3 +2,4 @@ __pycache__/
 *.pyc
 bench_signs/*.html
 bench_signs/_demo.png
+voices/
